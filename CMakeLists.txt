@@ -19,6 +19,8 @@ set(SOURCES
     main.cpp
     src/dbConnector.cpp
     src/dbHandler.cpp
+    src/simCalculator.cpp
+    src/mathFunctions.cpp
 )
 add_compile_options(-Wno-unknown-attributes)
 

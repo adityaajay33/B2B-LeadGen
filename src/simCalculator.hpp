@@ -9,7 +9,7 @@ class SimCalculator {
 
     public:
 
-        static std::vector<std::string> getSimilarCompanies(pqxx::connection &conn, const std::vector<Embedding> embeddings);
+        static std::vector<std::pair<std::string, double>> getSimilarCompanies(const Embedding &target_company, const std::vector<Embedding> &embeddings);
 };
 
 #endif  // SIM_CALCULATOR_HPP
