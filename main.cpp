@@ -2,16 +2,20 @@
 #include "src/dbConnector.hpp"
 #include "src/dbHandler.hpp"
 
+#include "vector"
+#include "unordered_map"
+
 int main(){
 
     pqxx::connection conn = DBConnector::createConnection();
 
-    std::vector<Company> companies = DBHandler::getCompanies(conn);
+    std::unordered_map<std::string, Company> companies = DBHandler::getCompanies(conn);
 
     std::cout << "Retrieved " << companies.size() << " companies \n";
-    for (const auto &company : companies){
-        std::cout << "- " << company.name << " (" << company.location << ")\n";
+    for (const auto &pair : companies){
+        const Company &company = pair.second;
+        std::cout << "- " << "[" << company.id << "] " << company.name << " (" << company.location << ")\n";
     }
-
+ 
     return 0;
 }

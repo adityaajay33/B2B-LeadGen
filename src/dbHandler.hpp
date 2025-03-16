@@ -9,7 +9,7 @@ class DBHandler {
 
     public:
 
-        static std::vector<Company> getCompanies(pqxx::connection &conn);
+        static std::unordered_map<std::string, Company> getCompanies(pqxx::connection &conn);;
 };
 
 #endif  // DB_HANDLER_HPP

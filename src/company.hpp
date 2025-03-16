@@ -5,7 +5,7 @@
 
 struct Company {
 
-    int id;
+    long id;
     std::string name;
     std::string location;
     std::string description;
@@ -13,7 +13,9 @@ struct Company {
     std::string industry;
     std::string specificIndustry;
 
-    Company(int id, const std::string& name, const std::string& location,
+    Company() = default;
+
+    Company(const long id, const std::string& name, const std::string& location,
         const std::string& description, const std::string& batch,
         const std::string& industry, const std::string& specificIndustry)
     : id(id), name(name), location(location), description(description),
