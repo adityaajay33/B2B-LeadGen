@@ -16,6 +16,9 @@ int main(){
         const Company &company = pair.second;
         std::cout << "- " << "[" << company.id << "] " << company.name << " (" << company.location << ")\n";
     }
- 
+
+    std::vector<Embedding> embeddings = DBHandler::getEmbeddings(conn, "locations");
+    std::cout << "Retrieved " << embeddings.size() << " embeddings \n";
+
     return 0;
 }
