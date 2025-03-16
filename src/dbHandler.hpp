@@ -10,7 +10,9 @@ class DBHandler {
 
     public:
 
-        static std::unordered_map<std::string, Company> getCompanies(pqxx::connection &conn);
+        static std::vector<Company> getCompanies(pqxx::connection &conn);
+
+        static Company getCompanyById(pqxx::connection &conn, long id);
 
         static std::vector<Embedding> getEmbeddings(pqxx::connection &conn, const std::string &index);
 };

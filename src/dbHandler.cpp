@@ -1,43 +1,45 @@
 #include "dbHandler.hpp"
 #include <iostream>
 
-std::unordered_map<std::string, Company> DBHandler::getCompanies(pqxx::connection &conn){
-    
-    std::unordered_map<std::string, Company> companies;
+
+/*
+HELPER FUNCTIONS - START
+*/
+
+bool columnExists(pqxx::connection &conn, const std::string &column) {
+
+    try {
+        pqxx::work txn(conn);
+        std::string query = "SELECT column_name FROM information_schema.columns WHERE table_name = 'company_embeddings' AND column_name = '" + column + "';";
+        pqxx::result res = txn.exec(query);
+
+        return !res.empty();
+    } catch (const std::exception &e) {
+        std::cerr << "ERROR: Checking column existence failed: " << e.what() << "\n";
+        return false;
+    }
+}
+
+bool checkIdExists(pqxx::connection &conn, const std::string &table, long id){
 
     try{
 
         pqxx::work txn(conn);
 
-        pqxx::result res = txn.exec("SELECT id, name, location, description, batch, industry, specific_industry FROM companies;");
+        std::string query = "SELECT 1 FROM " + table + " WHERE id = " + std::to_string(id) + " LIMIT 1;";
 
-        for (const auto& row : res) {
-            Company company = {
-                row["id"].is_null() ? 0 : row["id"].as<long>(),
-                row["name"].is_null() ? "Unknown" : row["name"].as<std::string>(),
-                row["location"].is_null() ? "Unknown" : row["location"].as<std::string>(),
-                row["description"].is_null() ? "No description" : row["description"].as<std::string>(),
-                row["batch"].is_null() ? "N/A" : row["batch"].as<std::string>(),
-                row["industry"].is_null() ? "Unknown industry" : row["industry"].as<std::string>(),
-                row["specific_industry"].is_null() ? "Unknown specialization" : row["specific_industry"].as<std::string>()
-            };
+        pqxx::result res = txn.exec(query);
 
-            companies.emplace(company.name, company);
-        }
+        return !res.empty();
 
+    }catch (const std::exception& e){
 
-        txn.commit();
-    } catch (const std::exception &e) {
-
-        std::cerr << "ERROR: Fetching company information from the database: " << e.what() << "\n";
+        std::cerr << "ERROR: Checking ID process did not execute correctly: " << e.what() << "\n";
+        return false;
     }
-
-    return companies; //if successful: returns companies, if not: empty vector is returned
 }
 
-
-// Helper function 
-std::vector<float> parseVector(const std::string& str) {
+std::vector<float> parseVector(const std::string &str) {
     std::vector<float> vec;
 
     std::string cleaned_str = str;
@@ -59,20 +61,82 @@ std::vector<float> parseVector(const std::string& str) {
     return vec;
 }
 
+/*
 
-// Helper function: Checks to see if a column exists in the db
-bool columnExists(pqxx::connection &conn, const std::string& column) {
+HELPER FUNCTIONS END
+*/
 
-    try {
+std::vector<Company> DBHandler::getCompanies(pqxx::connection &conn){
+    
+    std::vector<Company> companies;
+
+    try{
+
         pqxx::work txn(conn);
-        std::string query = "SELECT column_name FROM information_schema.columns WHERE table_name = 'company_embeddings' AND column_name = '" + column + "';";
+
+        pqxx::result res = txn.exec("SELECT id, name, location, description, batch, industry, specific_industry FROM companies;");
+
+        for (const auto& row : res) {
+            Company company = {
+                row["id"].is_null() ? 0 : row["id"].as<long>(),
+                row["name"].is_null() ? "Unknown" : row["name"].as<std::string>(),
+                row["location"].is_null() ? "Unknown" : row["location"].as<std::string>(),
+                row["description"].is_null() ? "No description" : row["description"].as<std::string>(),
+                row["batch"].is_null() ? "N/A" : row["batch"].as<std::string>(),
+                row["industry"].is_null() ? "Unknown industry" : row["industry"].as<std::string>(),
+                row["specific_industry"].is_null() ? "Unknown specialization" : row["specific_industry"].as<std::string>()
+            };
+
+            companies.push_back(company);
+        }
+
+
+        txn.commit();
+    } catch (const std::exception &e) {
+
+        std::cerr << "ERROR: Fetching companies information from the database: " << e.what() << "\n";
+    }
+
+    return companies; //if successful: returns companies, if not: empty vector is returned
+}
+
+Company DBHandler::getCompanyById(pqxx::connection &conn, long id){
+
+    Company company;
+
+    if (!checkIdExists(conn, "companies", id)){
+
+        std::cerr << "ERROR: ID '" << id << "' does not exist. Query aborted.\n";
+        return company;
+    }
+
+    try{
+
+        pqxx::work txn(conn);
+
+        std::string query = "SELECT * FROM companies WHERE id=" + std::to_string(id) + ";";
+
         pqxx::result res = txn.exec(query);
 
-        return !res.empty();
-    } catch (const std::exception &e) {
-        std::cerr << "ERROR: Checking column existence failed: " << e.what() << "\n";
-        return false;
+        if (!res.empty()){
+            pqxx::row row = res[0];
+            company = {
+                    row["id"].is_null() ? 0 : row["id"].as<long>(),
+                    row["name"].is_null() ? "Unknown" : row["name"].as<std::string>(),
+                    row["location"].is_null() ? "Unknown" : row["location"].as<std::string>(),
+                    row["description"].is_null() ? "No description" : row["description"].as<std::string>(),
+                    row["batch"].is_null() ? "N/A" : row["batch"].as<std::string>(),
+                    row["industry"].is_null() ? "Unknown industry" : row["industry"].as<std::string>(),
+                    row["specific_industry"].is_null() ? "Unknown specialization" : row["specific_industry"].as<std::string>()
+            };
+        }
+            
+    } catch (const std::exception &e){
+
+        std::cerr << "ERROR: Fetching company information from the database: " << e.what() << "\n";
     }
+
+    return company;
 }
 
 std::vector<Embedding> DBHandler::getEmbeddings(pqxx::connection &conn, const std::string &index){
