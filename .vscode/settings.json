@@ -62,6 +62,7 @@
         "set": "cpp",
         "sstream": "cpp",
         "stack": "cpp",
-        "unordered_map": "cpp"
+        "unordered_map": "cpp",
+        "pqxx": "cpp"
     }
 }
