@@ -1,0 +1,46 @@
+{
+    "nodes": [
+        {
+            "id": 1,
+            "name": "Airbnb"
+        },
+        {
+            "id": 122,
+            "name": "The Ticket Fairy"
+        },
+        {
+            "id": 209,
+            "name": "Roomstorm"
+        },
+        {
+            "id": 832,
+            "name": "Rove"
+        },
+        {
+            "id": 242,
+            "name": "Shoobs"
+        }
+    ],
+    "links": [
+        {
+            "source": 1,
+            "target": 122,
+            "value": 0.8865399594160616
+        },
+        {
+            "source": 1,
+            "target": 209,
+            "value": 0.8127145088423035
+        },
+        {
+            "source": 1,
+            "target": 832,
+            "value": 0.8052256315476211
+        },
+        {
+            "source": 1,
+            "target": 242,
+            "value": 0.7344079825817604
+        }
+    ]
+}

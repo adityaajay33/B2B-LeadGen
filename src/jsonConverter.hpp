@@ -15,9 +15,7 @@
 class JSONConverter {
 
     public:
-        static rapidjson::Document convertSimScoresToJSON(const std::vector<SimScore>& simScores);
-
-        
+        static rapidjson::Document convertSimScoresToJSON(const std::vector<SimScore>& simScores);  
 };
 
 #endif  // JSON_CONVERTER_HPP

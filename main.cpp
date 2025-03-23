@@ -7,10 +7,12 @@
 
 #include <vector>
 #include "unordered_map"
+#include <fstream>
 
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
+#include <rapidjson/ostreamwrapper.h>
 
 int main(){
 
@@ -33,15 +35,21 @@ int main(){
         std::cout << "- " << company.name << " (" << company.specificIndustry << ") (" << company.location << ")\n";
     }
     
-    std::vector<SimScore> top5SimScores(simScores.begin(), simScores.begin() + std::min(5, static_cast<int>(simScores.size()))); // Get top 5
+    std::vector<SimScore> topkSimScores(simScores.begin(), simScores.begin() + std::min(5, static_cast<int>(simScores.size())));
 
-    rapidjson::Document jsonData = JSONConverter::convertSimScoresToJSON(top5SimScores);
+    rapidjson::Document jsonData = JSONConverter::convertSimScoresToJSON(topkSimScores);
 
-    rapidjson::StringBuffer buffer;
-    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
-    jsonData.Accept(writer);
+    std::ofstream outFile("../graph/graph_data.json");
 
-    std::cout << buffer.GetString() << std::endl;
+    if (outFile.is_open()) {
+        rapidjson::OStreamWrapper osw(outFile);
+        rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(osw);
+        jsonData.Accept(writer);
+        outFile.close();
+        std::cout << "JSON data written to graph/graph_data.json" << std::endl;
+    } else {
+        std::cerr << "Failed to open the file for writing." << std::endl;
+    }
 
     return 0;
 }
