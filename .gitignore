@@ -1,8 +1,21 @@
+# Ignore the build directory
+/build/
+
+# Ignore CMake-related files
+backend/CMakeCache.txt
+backend/cmake_install.cmake
+backend/CMakeFiles/
+backend/Makefile
+
+# Ignore environment variable file
 .env
 
-CMakeCache.txt
-cmake_install.cmake
-CMakeFiles/
-Makefile
+# Ignore IDE and editor configurations
+backend/.vscode/
 
-build/
+# Ignore OS-specific files
+backend/.DS_Store
+backend/Thumbs.db
+
+# Ignore log files
+*.log

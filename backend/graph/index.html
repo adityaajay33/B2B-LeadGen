@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Company Similarity Graph</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/3d-force-graph"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #121212; }
+    </style>
+</head>
+<body>
+    <div id="3d-graph"></div>
+
+    <script>
+        fetch('graph_data.json')
+            .then(response => response.json())
+            .then(graphData => {
+                console.log("✅ Graph Data Loaded:", graphData);
+
+                // Ensure JSON is correct
+                if (!graphData.nodes || !graphData.links) {
+                    console.error("❌ Invalid JSON format: Missing nodes or links");
+                    return;
+                }
+
+                // Find the central node (e.g., Airbnb)
+                const centerNode = graphData.nodes.find(node => node.id === 1); // Adjust if different
+                if (centerNode) {
+                    centerNode.fx = 0; // Fix center node at (0,0,0)
+                    centerNode.fy = 0;
+                    centerNode.fz = 0;
+                }
+
+                // Create the 3D graph
+                const Graph = ForceGraph3D()(document.getElementById('3d-graph'))
+                    .graphData(graphData)
+                    .nodeLabel(node => node.name)
+                    .nodeAutoColorBy("id")
+                    .linkWidth(link => link.value * 5) 
+                    .linkOpacity(0.8)
+                    .linkColor(() => "#404040")
+                    .linkDirectionalParticles(4)
+                    .linkDirectionalParticleSpeed(link => link.value * 0.01);
+
+                // Apply d3 forces **AFTER** Graph initialization
+                Graph.d3Force('link', d3.forceLink()
+                    .distance(link => (1 - link.value) * 300)
+                    .strength(link => link.value * 2));
+
+                Graph.d3Force('charge', d3.forceManyBody().strength(-50));
+                Graph.d3Force('center', d3.forceCenter(0, 0, 0));
+
+
+                Graph.nodeThreeObject(node => {
+                    try {
+                        console.log(`Rendering node: ${node.name}`); // Debugging log
+
+                        const THREE = window.THREE; // Ensure Three.js is available
+                        if (!THREE) throw new Error("THREE.js not found!");
+
+                        // Create the node sphere
+                        const material = new THREE.MeshStandardMaterial({
+                            color: "#B0BEC5",  // Soft grayish-blue
+                            emissive: "#B0BEC5", // Subtle glow
+                            emissiveIntensity: 0.2,
+                            roughness: 0.6,
+                            metalness: 0.1
+                        });
+
+                        const sphere = new THREE.Mesh(
+                            new THREE.SphereGeometry(5), // Medium size nodes
+                            material
+                        );
+
+                        // Create a transparent canvas for text label
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+
+                        // Set initial font size and measure text
+                        const fontSize = 120;  // Bigger font size
+                        ctx.font = `Bold ${fontSize}px Arial`;
+                        ctx.textAlign = 'center';
+
+                        // Measure text width
+                        const textWidth = ctx.measureText(node.name).width;
+                        canvas.width = textWidth + 40;  // Add padding
+                        canvas.height = fontSize * 1.5; // Adjust height
+
+                        // Reapply font after resizing
+                        ctx.font = `Bold ${fontSize}px Arial`;
+                        ctx.textAlign = 'center';
+
+                        // Make background transparent
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                        // Set text color and draw text centered
+                        ctx.fillStyle = 'white';
+                        ctx.fillText(node.name, canvas.width / 2, fontSize);
+
+                        // Convert canvas to texture
+                        const texture = new THREE.CanvasTexture(canvas);
+                        texture.needsUpdate = true;
+
+                        // Ensure transparency
+                        texture.minFilter = THREE.LinearFilter;
+                        texture.magFilter = THREE.LinearFilter;
+                        texture.format = THREE.RGBAFormat;
+
+                        const materialLabel = new THREE.SpriteMaterial({
+                            map: texture,
+                            transparent: true,  // **Enable transparency**
+                            depthTest: false  // Ensures text renders on top
+                        });
+
+                        const textSprite = new THREE.Sprite(materialLabel);
+                        textSprite.scale.set(canvas.width / 20, canvas.height / 20, 1); // Scale label
+                        textSprite.position.set(0, 20, 0); // Position label above node
+
+                        const group = new THREE.Group();
+                        group.add(sphere);
+                        group.add(textSprite);
+
+                        return group;
+
+                    } catch (error) {
+                        console.error("❌ Error in .nodeThreeObject():", error);
+                        return null;
+                    }
+                });
+
+                Graph.cameraPosition({ x: 0, y: 0, z: 500 });
+
+            })
+            .catch(error => console.error("❌ Error loading graph data:", error));
+    </script>
+</body>
+</html>
