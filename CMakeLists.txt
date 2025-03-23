@@ -21,6 +21,7 @@ set(SOURCES
     src/dbHandler.cpp
     src/simCalculator.cpp
     src/mathFunctions.cpp
+    src/jsonConverter.cpp
 )
 add_compile_options(-Wno-unknown-attributes)
 

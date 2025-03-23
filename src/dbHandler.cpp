@@ -39,6 +39,25 @@ bool checkIdExists(pqxx::connection &conn, const std::string &table, long id){
     }
 }
 
+bool checkCompanyNameExists(pqxx::connection &conn, const std::string &table, const std::string &company_name){
+
+    try{
+
+        pqxx::work txn(conn);
+
+        std::string query = "SELECT 1 FROM " + table + " WHERE name = $1 LIMIT 1;";
+
+        pqxx::result res = txn.exec(query, pqxx::params{company_name});
+
+        return !res.empty();
+
+    }catch (const std::exception& e){
+
+        std::cerr << "ERROR: Checking company name existence did not execute correctly: " << e.what() << "\n";
+        return false;
+    }
+}
+
 std::vector<float> parseVector(const std::string &str) {
     std::vector<float> vec;
 
@@ -121,7 +140,7 @@ Company DBHandler::getCompanyById(pqxx::connection &conn, long id){
         if (!res.empty()){
             pqxx::row row = res[0];
             company = {
-                    row["id"].is_null() ? 0 : row["id"].as<long>(),
+                    row["id"].is_null() ? -1 : row["id"].as<long>(),
                     row["name"].is_null() ? "Unknown" : row["name"].as<std::string>(),
                     row["location"].is_null() ? "Unknown" : row["location"].as<std::string>(),
                     row["description"].is_null() ? "No description" : row["description"].as<std::string>(),
@@ -139,6 +158,37 @@ Company DBHandler::getCompanyById(pqxx::connection &conn, long id){
     return company;
 }
 
+long DBHandler::getIdByCompanyName(pqxx::connection &conn, const std::string &company_name){
+
+    long id = -1; // -1 is a default value returned when it is not found
+
+    if (!checkCompanyNameExists(conn, "companies", company_name)){
+
+        std::cerr << "ERROR: Company '" << company_name << "' does not exist. Query aborted.\n";
+        return id;
+    }
+
+    try{
+
+        pqxx::work txn(conn);
+
+        std::string query = "SELECT id FROM companies WHERE name = $1;";
+
+        pqxx::result res = txn.exec(query, pqxx::params{company_name});
+
+        if (!res.empty()) {
+            pqxx::row row = res[0];
+            id = row["id"].is_null() ? -1 : row["id"].as<long>(); // Handle nulls
+        }
+            
+    } catch (const std::exception &e){
+
+        std::cerr << "ERROR: Fetching company information from the database: " << e.what() << "\n";
+    }
+
+    return id;
+}
+
 std::vector<Embedding> DBHandler::getEmbeddings(pqxx::connection &conn, const std::string &index){
 
     std::vector<Embedding> embeddings;
@@ -151,13 +201,13 @@ std::vector<Embedding> DBHandler::getEmbeddings(pqxx::connection &conn, const st
     try{
         pqxx::work txn(conn);
 
-        std::string query = "SELECT id, company_name, " + index + " FROM company_embeddings;";
+        std::string query = "SELECT id, name, " + index + " FROM company_embeddings;";
         pqxx::result res = txn.exec(query);
         
         for (const auto& row : res) {
             Embedding embedding = {
                 row["id"].is_null() ? 0 : row["id"].as<long>(),
-                row["company_name"].is_null() ? "Unknown" : row["company_name"].as<std::string>(),
+                row["name"].is_null() ? "Unknown" : row["name"].as<std::string>(),
                 row[index].is_null() ? std::vector<float>{0.0} : parseVector(row[index].as<std::string>())
             };
 
