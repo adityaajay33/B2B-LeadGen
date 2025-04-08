@@ -7,12 +7,17 @@
 
 #include <vector>
 #include "unordered_map"
+#include <map>
 #include <fstream>
 
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/ostreamwrapper.h>
+
+#include <pybind11/embed.h>
+
+#include "src/PromptExtractor.h"
 
 int main(){
 
@@ -49,6 +54,13 @@ int main(){
         std::cout << "JSON data written to graph/graph_data.json" << std::endl;
     } else {
         std::cerr << "Failed to open the file for writing." << std::endl;
+    }
+
+    PromptExtractor extractor;
+    auto result = extractor.extract("I want a food delivery company in California");
+
+    for (const auto& [key, value] : result) {
+        std::cout << key << ": " << value << "\n";
     }
 
     return 0;
