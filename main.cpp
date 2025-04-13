@@ -23,45 +23,15 @@ int main(){
 
     pqxx::connection conn = DBConnector::createConnection();
 
-    std::vector<Company> companies = DBHandler::getCompanies(conn);
-    std::cout << "Retrieved " << companies.size() << " companies \n";
-
-    std::vector<Embedding> embeddings = DBHandler::getEmbeddings(conn, "specific_industry_locations");
+    std::vector<Embedding> embeddings = DBHandler::getEmbeddings(conn, "description");
     std::cout << "Retrieved " << embeddings.size() << " embeddings \n";
 
-    long id = DBHandler::getIdByCompanyName(conn, "The Ticket Fairy");
-    std::cout << "Retrieved id = " << id << ".\n";
+    std::string prompt = "Food delivery company in San Francisco";
+    std::vector<SimScore> simScoresByPrompt = SimCalculator::getSimilarCompaniesToPrompt(prompt, embeddings);
     
-    Embedding airbnb = embeddings[0];
-    std::vector<SimScore> simScores = SimCalculator::getSimilarCompanies(airbnb, embeddings);
-
-    for (int i = 0; i < 10 && i < simScores.size(); ++i) {
-        Company company = DBHandler::getCompanyById(conn, simScores[i].id);
+    for (int i = 0; i < 10 && i < simScoresByPrompt.size(); ++i) {
+        Company company = DBHandler::getCompanyById(conn, simScoresByPrompt[i].id);
         std::cout << "- " << company.name << " (" << company.specificIndustry << ") (" << company.location << ")\n";
     }
-    
-    std::vector<SimScore> topkSimScores(simScores.begin(), simScores.begin() + std::min(5, static_cast<int>(simScores.size())));
-
-    rapidjson::Document jsonData = JSONConverter::convertSimScoresToJSON(topkSimScores);
-
-    std::ofstream outFile("../graph/graph_data.json");
-
-    if (outFile.is_open()) {
-        rapidjson::OStreamWrapper osw(outFile);
-        rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(osw);
-        jsonData.Accept(writer);
-        outFile.close();
-        std::cout << "JSON data written to graph/graph_data.json" << std::endl;
-    } else {
-        std::cerr << "Failed to open the file for writing." << std::endl;
-    }
-
-    PromptExtractor extractor;
-    auto result = extractor.extract("I want a food delivery company in California");
-
-    for (const auto& [key, value] : result) {
-        std::cout << key << ": " << value << "\n";
-    }
-
     return 0;
 }
