@@ -34,7 +34,6 @@ set(SOURCES
     src/simCalculator.cpp
     src/mathFunctions.cpp
     src/jsonConverter.cpp
-    src/promptExtractor.cpp
 )
 
 # Build main executable

@@ -10,5 +10,3 @@ prompt = sys.argv[1]
 embedding = model.encode(prompt)
 
 print(",".join(str(x) for x in embedding))
-
-

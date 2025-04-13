@@ -17,8 +17,6 @@
 
 #include <pybind11/embed.h>
 
-#include "src/PromptExtractor.h"
-
 int main(){
 
     pqxx::connection conn = DBConnector::createConnection();
